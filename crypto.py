@@ -1,22 +1,17 @@
 from cryptory import Cryptory
-# generate price correlation matrix
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# initialise object 
-# pull data from start of 2017 to present day
 my_cryptory = Cryptory(from_date = "2017-01-01")
 
 my_cryptory.extract_coinmarketcap("bitcoin")
 
 
 all_coins_df = my_cryptory.extract_bitinfocharts("btc")
-# coins of interest
 bitinfocoins = ["btc", "eth", "xrp", "bch", "ltc", "dash", "xmr", "doge"]
 for coin in bitinfocoins[1:]:
     all_coins_df = all_coins_df.merge(my_cryptory.extract_bitinfocharts(coin), on="date", how="left")
-# date column not need for upcoming calculations
 all_coins_df = all_coins_df.drop('date', axis=1)
 corr = all_coins_df.pct_change().corr(method='pearson')
 fig, ax = plt.subplots(figsize=(7,5))  
@@ -25,12 +20,10 @@ sns.heatmap(corr,
             yticklabels=[col.replace("_price", "") for col in corr.columns.values],
             annot_kws={"size": 16})
 plt.show()
-# overlay bitcoin price and google searches for bitcoin
 btc_google = my_cryptory.get_google_trends(kw_list=['bitcoin']).merge(
     my_cryptory.extract_coinmarketcap('bitcoin')[['date','close']], 
     on='date', how='inner')
 
-# need to scale columns (min-max scaling)
 btc_google[['bitcoin','close']] = (
         btc_google[['bitcoin', 'close']]-btc_google[['bitcoin', 'close']].min())/(
         btc_google[['bitcoin', 'close']].max()-btc_google[['bitcoin', 'close']].min())
